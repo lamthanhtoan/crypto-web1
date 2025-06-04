@@ -1,0 +1,49 @@
+body {
+  width: 350px;
+  padding: 10px;
+  font-family: 'Roboto', 'Arial', 'Segoe UI', sans-serif;
+  font-size: 16px;
+  margin: 0 auto;
+}
+
+h2, h3, h4 {
+  text-align: center;
+  font-size: 18px;
+}
+
+h4 {
+  font-size: 16px;
+  margin: 10px 0 5px;
+}
+
+p {
+  margin: 5px 0;
+}
+
+.author {
+  text-align: center;
+  font-size: 12px;
+  color: #666;
+  margin-top: 10px;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+li {
+  margin: 5px 0;
+  font-size: 14px;
+}
+
+#coin-selector {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 10px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
