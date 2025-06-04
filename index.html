@@ -3,34 +3,45 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dự đoán giá tiền ảo</title>
+  <title>Dự đoán giá tiền điện tử</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-financial@0.2.0/dist/chartjs-chart-financial.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prophet-js@0.0.1/dist/prophet.min.js"></script>
 </head>
 <body>
-  <div class="container">
-    <h1>Giá & Dự đoán tiền ảo</h1>
-    <div class="selector">
-      <label for="coin-select">Chọn tiền ảo:</label>
-      <select id="coin-select" onchange="updateCoin()">
-        <option value="bitcoin">Bitcoin (BTC)</option>
-        <option value="ethereum">Ethereum (ETH)</option>
-        <option value="solana">Solana (SOL)</option>
-      </select>
-    </div>
-    <div class="price-info">
-      <p>Giá hiện tại: <span id="current-price">Đang tải...</span></p>
-      <p>Giá dự đoán (24h): <span id="predicted-price">Đang tải...</span></p>
-      <p>Xu hướng: <span id="trend">Đang tải...</span></p>
-      <button onclick="refreshData()">Làm mới</button>
-    </div>
-    <div class="chart-container">
-      <canvas id="priceChart"></canvas>
-    </div>
-    <p class="author">Tác giả: Lâm Thanh Toàn</p>
+  <h2>Dự đoán giá tiền điện tử</h2>
+  <select id="coin-selector" onchange="changeCoin()">
+    <option value="">Chọn tiền điện tử</option>
+    <option value="bitcoin" selected>Bitcoin (BTC)</option>
+    <option value="ethereum">Ethereum (ETH)</option>
+    <option value="binancecoin">BNB (BNB)</option>
+    <option value="solana">Solana (SOL)</option>
+    <option value="ripple">XRP (XRP)</option>
+    <option value="cardano">Cardano (ADA)</option>
+    <option value="dogecoin">Dogecoin (DOGE)</option>
+    <option value="shiba-inu">Shiba Inu (SHIB)</option>
+    <option value="avalanche-2">Avalanche (AVAX)</option>
+    <option value="polkadot">Polkadot (DOT)</option>
+    <option value="chainlink">Chainlink (LINK)</option>
+    <option value="tron">Tron (TRX)</option>
+    <option value="matic-network">Polygon (MATIC)</option>
+    <option value="near">Near Protocol (NEAR)</option>
+    <option value="aptos">Aptos (APT)</option>
+    <option value="stellar">Stellar (XLM)</option>
+    <option value="cosmos">Cosmos (ATOM)</option>
+    <option value="arbitrum">Arbitrum (ARB)</option>
+    <option value="optimism">Optimism (OP)</option>
+    <option value="hedera-hashgraph">Hedera (HBAR)</option>
+  </select>
+  <div id="coin-data">
+    <h3 id="coin-name">Bitcoin (BTC)</h3>
+    <p>Giá hiện tại: <span id="current-price">Đang tải...</span></p>
+    <p>Giá dự đoán (24h): <span id="predicted-price">Đang tải...</span></p>
+    <p>Xu hướng: <span id="trend">Đang tải...</span></p>
+    <h4>Lịch sử dự đoán</h4>
+    <ul id="prediction-history"></ul>
   </div>
+  <p class="author">Tác giả: Lâm Thanh Toàn</p>
   <script src="script.js"></script>
 </body>
 </html>
