@@ -4,64 +4,177 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quản Lý Kế Hoạch Công Việc</title>
-    <link rel="stylesheet" href="styles.css">
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #f0f2f5;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .task-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .task-form input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .task-form button {
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .task-form button:hover {
+            background-color: #218838;
+        }
+        .task-list {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .task-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .task-item:last-child {
+            border-bottom: none;
+        }
+        .task-item input[type="checkbox"] {
+            margin-right: 10px;
+        }
+        .task-item.completed {
+            text-decoration: line-through;
+            color: #888;
+        }
+        .date-selector {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .date-selector input {
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+    </style>
 </head>
 <body>
-    <div id="auth-container">
-        <h2>Đăng Nhập</h2>
-        <input type="email" id="email" placeholder="Email">
-        <input type="password" id="password" placeholder="Mật khẩu">
-        <button onclick="signIn()">Đăng Nhập</button>
-        <button onclick="signUp()">Đăng Ký</button>
+    <h1>Quản Lý Kế Hoạch Công Việc</h1>
+    <div class="date-selector">
+        <input type="date" id="selectedDate" onchange="loadTasks()">
     </div>
-    <div id="app-container" style="display: none;">
-        <h1>Quản Lý Kế Hoạch Công Việc</h1>
-        <button onclick="signOut()">Đăng Xuất</button>
-        <div class="date-selector">
-            <input type="date" id="selectedDate" onchange="loadTasks()">
-        </div>
-        <div class="task-form">
-            <input type="text" id="taskInput" placeholder="Nhập công việc...">
-            <button onclick="addTask()">Thêm</button>
-        </div>
-        <div class="task-list" id="taskList"></div>
+    <div class="task-form">
+        <input type="text" id="taskInput" placeholder="Nhập công việc...">
+        <button onclick="addTask()">Thêm</button>
     </div>
-    <script src="script.js"></script>
+    <div class="task-list" id="taskList"></div>
+
+    <script>
+        let tasks = JSON.parse(localStorage.getItem('tasks')) || {};
+
+        // Thiết lập ngày hiện tại
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('selectedDate').value = today;
+        
+        // Tự động chuyển công việc chưa hoàn thành
+        function moveIncompleteTasks() {
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+            if (tasks[yesterdayStr]) {
+                tasks[today] = tasks[today] || [];
+                tasks[yesterdayStr].forEach(task => {
+                    if (!task.completed) {
+                        tasks[today].push({ ...task, date: today });
+                    }
+                });
+                // Xóa các công việc đã chuyển
+                tasks[yesterdayStr] = tasks[yesterdayStr].filter(task => task.completed);
+                if (tasks[yesterdayStr].length === 0) {
+                    delete tasks[yesterdayStr];
+                }
+                saveTasks();
+            }
+        }
+
+        // Lưu công việc vào localStorage
+        function saveTasks() {
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+        }
+
+        // Tải công việc theo ngày được chọn
+        function loadTasks() {
+            const selectedDate = document.getElementById('selectedDate').value;
+            const taskList = document.getElementById('taskList');
+            taskList.innerHTML = '';
+
+            if (selectedDate === today) {
+                moveIncompleteTasks();
+            }
+
+            tasks[selectedDate] = tasks[selectedDate] || [];
+            tasks[selectedDate].forEach((task, index) => {
+                const taskItem = document.createElement('div');
+                taskItem.className = 'task-item' + (task.completed ? ' completed' : '');
+                taskItem.innerHTML = `
+                    <input type="checkbox" ${task.completed ? 'checked' : ''} 
+                           onchange="toggleTask(${index}, '${selectedDate}')">
+                    <span>${task.text}</span>
+                `;
+                taskList.appendChild(taskItem);
+            });
+        }
+
+        // Thêm công việc mới
+        function addTask() {
+            const taskInput = document.getElementById('taskInput');
+            const selectedDate = document.getElementById('selectedDate').value;
+            const taskText = taskInput.value.trim();
+
+            if (taskText === '') return;
+
+            tasks[selectedDate] = tasks[selectedDate] || [];
+            tasks[selectedDate].push({
+                text: taskText,
+                completed: false,
+                date: selectedDate
+            });
+
+            taskInput.value = '';
+            saveTasks();
+            loadTasks();
+        }
+
+        // Đánh dấu công việc hoàn thành
+        function toggleTask(index, date) {
+            tasks[date][index].completed = !tasks[date][index].completed;
+            saveTasks();
+            loadTasks();
+        }
+
+        // Tự động tải công việc khi mở trang
+        loadTasks();
+
+        // Xử lý Enter để thêm công việc
+        document.getElementById('taskInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addTask();
+            }
+        });
+    </script>
 </body>
-</html><!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản Lý Kế Hoạch Công Việc</title>
-    <link rel="stylesheet" href="styles.css">
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-</head>
-<body>
-    <div id="auth-container">
-        <h2>Đăng Nhập</h2>
-        <input type="email" id="email" placeholder="Email">
-        <input type="password" id="password" placeholder="Mật khẩu">
-        <button onclick="signIn()">Đăng Nhập</button>
-        <button onclick="signUp()">Đăng Ký</button>
-    </div>
-    <div id="app-container" style="display: none;">
-        <h1>Quản Lý Kế Hoạch Công Việc</h1>
-        <button onclick="signOut()">Đăng Xuất</button>
-        <div class="date-selector">
-            <input type="date" id="selectedDate" onchange="loadTasks()">
-        </div>
-        <div class="task-form">
-            <input type="text" id="taskInput" placeholder="Nhập công việc...">
-            <button onclick="addTask()">Thêm</button>
-        </div>
-        <div class="task-list" id="taskList"></div>
-    </div>
-    <script src="script.js"></script>
-</body>
-</html> 
+</html>
