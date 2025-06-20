@@ -1,180 +1,126 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản Lý Kế Hoạch Công Việc</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 20px auto;
-            padding: 20px;
-            background-color: #f0f2f5;
-        }
-        h1 {
-            text-align: center;
-            color: #333;
-        }
-        .task-form {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        .task-form input {
-            flex: 1;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-        .task-form button {
-            padding: 10px 20px;
-            background-color: #28a745;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        .task-form button:hover {
-            background-color: #218838;
-        }
-        .task-list {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .task-item {
-            display: flex;
-            align-items: center;
-            padding: 10px;
-            border-bottom: 1px solid #eee;
-        }
-        .task-item:last-child {
-            border-bottom: none;
-        }
-        .task-item input[type="checkbox"] {
-            margin-right: 10px;
-        }
-        .task-item.completed {
-            text-decoration: line-through;
-            color: #888;
-        }
-        .date-selector {
-            margin-bottom: 20px;
-            text-align: center;
-        }
-        .date-selector input {
-            padding: 8px;
-            border-radius: 4px;
-            border: 1px solid #ddd;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>Công Cụ Trắc Địa</title>
+  <style>
+    body { font-family: Arial; background: #f4f4f4; max-width: 600px; margin: auto; padding: 20px; }
+    h2 { color: #007bff; }
+    select, input { width: 100%; padding: 8px; margin: 5px 0; border-radius: 4px; border: 1px solid #ccc; }
+    button { width: 100%; padding: 12px; margin-top: 10px; background: #007bff; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+    button:hover { background: #0056b3; }
+    .block { background: #fff; padding: 15px; margin-top: 15px; border-radius: 8px; box-shadow: 0 2px 4px #ccc; }
+    .result { margin-top: 10px; padding: 10px; background: #eef; border-left: 4px solid #007bff; }
+    .note { font-size: 0.9em; color: #555; margin-top: 8px; background: #f9f9f9; padding: 8px; border-left: 3px solid #999; }
+  </style>
 </head>
 <body>
-    <h1>Quản Lý Kế Hoạch Công Việc</h1>
-    <div class="date-selector">
-        <input type="date" id="selectedDate" onchange="loadTasks()">
-    </div>
-    <div class="task-form">
-        <input type="text" id="taskInput" placeholder="Nhập công việc...">
-        <button onclick="addTask()">Thêm</button>
-    </div>
-    <div class="task-list" id="taskList"></div>
 
-    <script>
-        let tasks = JSON.parse(localStorage.getItem('tasks')) || {};
+  <h2>Công Cụ Hỗ Trợ Tính Trắc Địa</h2>
 
-        // Thiết lập ngày hiện tại
-        const today = new Date().toISOString().split('T')[0];
-        document.getElementById('selectedDate').value = today;
-        
-        // Tự động chuyển công việc chưa hoàn thành
-        function moveIncompleteTasks() {
-            const yesterday = new Date();
-            yesterday.setDate(yesterday.getDate() - 1);
-            const yesterdayStr = yesterday.toISOString().split('T')[0];
+  <label>Chọn chức năng:</label>
+  <select id="chucnang" onchange="chonChucNang()">
+    <option value="">-- Chọn --</option>
+    <option value="2c">Tính 2C</option>
+    <option value="kc">Tính khoảng cách 2 điểm</option>
+    <option value="ss">Tính sai số vị trí</option>
+  </select>
 
-            if (tasks[yesterdayStr]) {
-                tasks[today] = tasks[today] || [];
-                tasks[yesterdayStr].forEach(task => {
-                    if (!task.completed) {
-                        tasks[today].push({ ...task, date: today });
-                    }
-                });
-                // Xóa các công việc đã chuyển
-                tasks[yesterdayStr] = tasks[yesterdayStr].filter(task => task.completed);
-                if (tasks[yesterdayStr].length === 0) {
-                    delete tasks[yesterdayStr];
-                }
-                saveTasks();
-            }
-        }
+  <div id="form2c" class="block" style="display:none;">
+    <h3>1️⃣ Tính 2C</h3>
+    <label>Góc 1 (DMS):</label>
+    <input id="g1d" placeholder="Độ">
+    <input id="g1m" placeholder="Phút">
+    <input id="g1s" placeholder="Giây">
+    <label>Góc 2 (DMS):</label>
+    <input id="g2d" placeholder="Độ">
+    <input id="g2m" placeholder="Phút">
+    <input id="g2s" placeholder="Giây">
+    <button onclick="tinh2C()">Tính 2C</button>
+    <div id="kq2c" class="result"></div>
+    <div class="note"><b>Công thức:</b> 2C = [A1 + (A2 - 180°)] / 2</div>
+  </div>
 
-        // Lưu công việc vào localStorage
-        function saveTasks() {
-            localStorage.setItem('tasks', JSON.stringify(tasks));
-        }
+  <div id="formkc" class="block" style="display:none;">
+    <h3>2️⃣ Tính khoảng cách 2 điểm</h3>
+    <label>X1:</label>
+    <input id="x1">
+    <label>Y1:</label>
+    <input id="y1">
+    <label>X2:</label>
+    <input id="x2">
+    <label>Y2:</label>
+    <input id="y2">
+    <button onclick="tinhKC()">Tính khoảng cách</button>
+    <div id="kqkc" class="result"></div>
+    <div class="note"><b>Công thức:</b> S = √[(X2 − X1)² + (Y2 − Y1)²]</div>
+  </div>
 
-        // Tải công việc theo ngày được chọn
-        function loadTasks() {
-            const selectedDate = document.getElementById('selectedDate').value;
-            const taskList = document.getElementById('taskList');
-            taskList.innerHTML = '';
+  <div id="formss" class="block" style="display:none;">
+    <h3>3️⃣ Tính sai số vị trí</h3>
+    <label>∆X:</label>
+    <input id="dx">
+    <label>∆Y:</label>
+    <input id="dy">
+    <button onclick="tinhSaiSo()">Tính sai số vị trí</button>
+    <div id="kqss" class="result"></div>
+    <div class="note"><b>Công thức:</b> m = √[(∆X)² + (∆Y)²]</div>
+  </div>
 
-            if (selectedDate === today) {
-                moveIncompleteTasks();
-            }
+  <script>
+    function chonChucNang() {
+      var chucnang = document.getElementById("chucnang").value;
+      document.getElementById("form2c").style.display = "none";
+      document.getElementById("formkc").style.display = "none";
+      document.getElementById("formss").style.display = "none";
+      if (chucnang === "2c") document.getElementById("form2c").style.display = "block";
+      else if (chucnang === "kc") document.getElementById("formkc").style.display = "block";
+      else if (chucnang === "ss") document.getElementById("formss").style.display = "block";
+    }
 
-            tasks[selectedDate] = tasks[selectedDate] || [];
-            tasks[selectedDate].forEach((task, index) => {
-                const taskItem = document.createElement('div');
-                taskItem.className = 'task-item' + (task.completed ? ' completed' : '');
-                taskItem.innerHTML = `
-                    <input type="checkbox" ${task.completed ? 'checked' : ''} 
-                           onchange="toggleTask(${index}, '${selectedDate}')">
-                    <span>${task.text}</span>
-                `;
-                taskList.appendChild(taskItem);
-            });
-        }
+    function dmsToDecimal(d, m, s) {
+      return Math.abs(d) + m / 60 + s / 3600;
+    }
 
-        // Thêm công việc mới
-        function addTask() {
-            const taskInput = document.getElementById('taskInput');
-            const selectedDate = document.getElementById('selectedDate').value;
-            const taskText = taskInput.value.trim();
+    function tinh2C() {
+      let g1 = dmsToDecimal(
+        parseFloat(document.getElementById("g1d").value) || 0,
+        parseFloat(document.getElementById("g1m").value) || 0,
+        parseFloat(document.getElementById("g1s").value) || 0
+      );
+      let g2 = dmsToDecimal(
+        parseFloat(document.getElementById("g2d").value) || 0,
+        parseFloat(document.getElementById("g2m").value) || 0,
+        parseFloat(document.getElementById("g2s").value) || 0
+      );
 
-            if (taskText === '') return;
+      let resultDec = ((g1 + (g2 - 180)) / 2);
 
-            tasks[selectedDate] = tasks[selectedDate] || [];
-            tasks[selectedDate].push({
-                text: taskText,
-                completed: false,
-                date: selectedDate
-            });
+      let d = Math.floor(resultDec);
+      let mFloat = (resultDec - d) * 60;
+      let m = Math.floor(mFloat);
+      let s = ((mFloat - m) * 60).toFixed(2);
 
-            taskInput.value = '';
-            saveTasks();
-            loadTasks();
-        }
+      document.getElementById("kq2c").innerText = `Kết quả 2C: ${d}° ${m}' ${s}"`;
+    }
 
-        // Đánh dấu công việc hoàn thành
-        function toggleTask(index, date) {
-            tasks[date][index].completed = !tasks[date][index].completed;
-            saveTasks();
-            loadTasks();
-        }
+    function tinhKC() {
+      let x1 = parseFloat(document.getElementById("x1").value) || 0;
+      let y1 = parseFloat(document.getElementById("y1").value) || 0;
+      let x2 = parseFloat(document.getElementById("x2").value) || 0;
+      let y2 = parseFloat(document.getElementById("y2").value) || 0;
+      let kc = Math.sqrt((x2 - x1)**2 + (y2 - y1)**2).toFixed(3);
+      document.getElementById("kqkc").innerText = `Khoảng cách: ${kc} m`;
+    }
 
-        // Tự động tải công việc khi mở trang
-        loadTasks();
-
-        // Xử lý Enter để thêm công việc
-        document.getElementById('taskInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                addTask();
-            }
-        });
-    </script>
+    function tinhSaiSo() {
+      let dx = parseFloat(document.getElementById("dx").value) || 0;
+      let dy = parseFloat(document.getElementById("dy").value) || 0;
+      let ss = Math.sqrt(dx**2 + dy**2).toFixed(3);
+      document.getElementById("kqss").innerText = `Sai số vị trí: ${ss}`;
+    }
+  </script>
+</div>
+    <p class="text-center text-xs text-gray-500 mt-4">Tác giả: Lâm Thanh Toàn</p>
 </body>
 </html>
